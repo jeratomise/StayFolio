@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { Stay } from "../types";
+import { Stay, ChatMessage } from "../types";
 
 const createPrompt = (stays: Stay[]) => {
   // Take the last 5 stays or interesting summary stats to keep context small
@@ -95,4 +95,47 @@ export const generateTravelImage = async (stays: Stay[]): Promise<string | null>
     console.error("Image Generation Error:", error);
     return null;
   }
+};
+
+export const getConciergeAdvice = async (history: ChatMessage[], stays: Stay[], query: string): Promise<string> => {
+    if (!process.env.API_KEY) return "Please configure your API_KEY.";
+
+    const stayContext = stays.map(s => 
+        `- ${s.hotelName} (${s.brand}) in ${s.country}, Rating: ${s.rating || 'N/A'}, Cost: $${s.cost || 'N/A'}`
+    ).join('\n');
+
+    const systemInstruction = `
+    You are the "StayFolio Concierge", an elite travel assistant for a frequent traveler.
+    
+    User's Travel History Summary:
+    ${stayContext}
+
+    Your goal is to help the user optimize their elite status, find hotels that match their taste based on history, and answer travel logistics questions.
+    
+    Guidelines:
+    1. Be concise, professional, but witty.
+    2. Use the user's history to make personalized recommendations (e.g. "Since you liked the Park Hyatt...").
+    3. If they ask about status, analyze their brand loyalty.
+    4. Use emojis sparingly.
+    `;
+
+    try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const chat = ai.chats.create({
+            model: 'gemini-3-flash-preview',
+            config: {
+                systemInstruction: systemInstruction,
+            },
+            history: history.map(h => ({
+                role: h.role,
+                parts: [{ text: h.text }]
+            }))
+        });
+
+        const result = await chat.sendMessage({ message: query });
+        return result.text || "I'm having trouble connecting to the concierge desk right now.";
+    } catch (error) {
+        console.error("Concierge Error:", error);
+        return "The concierge is currently busy. Please try again later.";
+    }
 };

@@ -3,7 +3,6 @@ import { BrandGroup, Stay } from '../types';
 import { Building2, Calendar, Moon, MapPin, Trophy, Banknote, TrendingUp, TrendingDown, Home, Plane, Filter, MessageCircle, User, Sparkles } from 'lucide-react';
 import { BRAND_LOGOS } from '../constants';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { HotelIntel } from './HotelIntel';
 
 interface BrandPortfolioProps {
   stays: Stay[];
@@ -37,7 +36,7 @@ export const BrandPortfolio: React.FC<BrandPortfolioProps> = ({ stays }) => {
   // Extract available years for filter
   const availableYears = useMemo(() => {
     const years = new Set(stays.map(s => new Date(s.checkInDate).getFullYear()));
-    return Array.from(years).sort((a, b) => b - a).map(String);
+    return Array.from(years).sort((a: number, b: number) => b - a).map(String);
   }, [stays]);
 
   // Filter Logic
@@ -170,9 +169,6 @@ export const BrandPortfolio: React.FC<BrandPortfolioProps> = ({ stays }) => {
          <h1 className="text-3xl font-black text-slate-800 tracking-tight">My Portfolio Passport</h1>
          <p className="text-slate-500 max-w-md mx-auto">A visual breakdown of your hospitality conquest.</p>
       </div>
-
-      {/* Hotel Intel Feed */}
-      <HotelIntel />
 
       {/* SECTION 1: The Breakdown (With Time Filter) */}
       <div className="space-y-6">

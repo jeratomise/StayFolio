@@ -1,5 +1,7 @@
 export interface Stay {
   id: string;
+  userId?: string;     // ID of the user who owns this stay
+  userEmail?: string;  // Email of the user who owns this stay
   hotelName: string;
   brand: string;
   country: string;
@@ -17,7 +19,7 @@ export interface BrandGroup {
   stays: Stay[];
 }
 
-export type ViewMode = 'dashboard' | 'portfolio' | 'share' | 'status';
+export type ViewMode = 'dashboard' | 'portfolio' | 'share' | 'status' | 'profile' | 'admin_users' | 'concierge';
 
 export interface StatSummary {
   totalStays: number;
@@ -46,4 +48,30 @@ export interface ProgramInfo {
   name: string;
   color: string;
   tiers: EliteTier[];
+}
+
+export interface UserSummary {
+  userId: string;
+  email: string;
+  totalStays: number;
+  lastActive: string;
+  subscription?: Subscription;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'model';
+  text: string;
+  timestamp: number;
+}
+
+export interface Subscription {
+  userId: string;
+  status: 'free' | 'pro';
+  expiresAt: string | null; // ISO Date string
+  stripeCustomerId?: string;
+}
+
+export interface AppConfig {
+  stripeEnabled: boolean;
 }

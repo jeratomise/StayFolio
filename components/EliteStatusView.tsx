@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Crown, Moon, DollarSign, Calendar, Info, CheckCircle2, Pencil, Check } from 'lucide-react';
+import { Crown, Moon, DollarSign, Calendar, Info, CheckCircle2, Pencil, Check, Lock, Star } from 'lucide-react';
 import { ELITE_PROGRAMS, BRAND_LOGOS } from '../constants';
 import { ProgramInfo, Stay } from '../types';
 import { getManualStatuses, saveManualStatus } from '../services/storage';
 
 interface EliteStatusViewProps {
     stays: Stay[];
+    isPro: boolean;
+    onUpgrade: () => void;
 }
 
 const StatusCard: React.FC<{ 
@@ -15,7 +17,9 @@ const StatusCard: React.FC<{
     onUpdateStatus: (status: string) => void;
     prevYear: number;
     earnedStats: { nights: number; spend: number };
-}> = ({ program, earnedStatus, manualStatus, onUpdateStatus, prevYear, earnedStats }) => {
+    locked: boolean;
+    onUpgrade: () => void;
+}> = ({ program, earnedStatus, manualStatus, onUpdateStatus, prevYear, earnedStats, locked, onUpgrade }) => {
   const [imageError, setImageError] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const logoUrl = BRAND_LOGOS[program.name];
@@ -24,6 +28,31 @@ const StatusCard: React.FC<{
   
   // All possible tiers plus 'Member'
   const allTiers = ['Member', ...program.tiers.map(t => t.name)];
+
+  if (locked) {
+      return (
+          <div className="bg-slate-50 rounded-2xl border border-dashed border-slate-300 overflow-hidden flex flex-col items-center justify-center p-6 text-center h-full min-h-[280px] opacity-70 hover:opacity-100 transition-opacity relative group">
+              <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center p-6">
+                  <div className="bg-slate-900 text-white p-3 rounded-full mb-3 shadow-lg">
+                      <Lock size={20} />
+                  </div>
+                  <h3 className="font-bold text-slate-800 mb-1">{program.name}</h3>
+                  <p className="text-xs text-slate-500 mb-4">Upgrade to PRO to track multiple status programs simultaneously.</p>
+                  <button 
+                    onClick={onUpgrade}
+                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:bg-indigo-700 transition-colors"
+                  >
+                      Unlock Status Wallet
+                  </button>
+              </div>
+              {/* Ghost Content Behind */}
+              <div className="flex items-center gap-2 mb-4 opacity-20">
+                 <Crown size={24} />
+                 <span className="font-bold text-xl">Locked</span>
+              </div>
+          </div>
+      );
+  }
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-all group flex flex-col h-full">
@@ -136,7 +165,7 @@ const StatusCard: React.FC<{
   );
 };
 
-export const EliteStatusView: React.FC<EliteStatusViewProps> = ({ stays }) => {
+export const EliteStatusView: React.FC<EliteStatusViewProps> = ({ stays, isPro, onUpgrade }) => {
   const [manualStatuses, setManualStatuses] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -148,7 +177,6 @@ export const EliteStatusView: React.FC<EliteStatusViewProps> = ({ stays }) => {
       setManualStatuses(updated);
   };
 
-  // Logic: Current Status is usually determined by LAST year's activity.
   const referenceYear = useMemo(() => new Date().getFullYear() - 1, []);
 
   const calculateStats = (programName: string) => {
@@ -174,23 +202,11 @@ export const EliteStatusView: React.FC<EliteStatusViewProps> = ({ stays }) => {
   };
 
   const getEarnedStatus = (program: ProgramInfo, stats: { nights: number; spend: number; stayCount: number }) => {
-      // Sort tiers high to low (rank 1 is highest)
-      const sortedTiers = [...program.tiers].sort((a, b) => a.rank - b.rank); // Rank 1 is usually highest in our data
-      
-      // Since our data defines Rank 1 as highest, but logic in loops usually goes low->high or checks "met requirement".
-      // Let's iterate from Highest Requirement. If met, return it.
-      
-      // Wait, Rank 1 (Ambassador) requires 100 nights. Rank 2 (Titanium) requires 75.
-      // We should check highest first.
-      
+      const sortedTiers = [...program.tiers].sort((a, b) => a.rank - b.rank);
       for (const tier of sortedTiers) {
           const req = tier.requirements;
           let met = false;
-          
           if (req.nights && stats.nights >= req.nights) {
-              // Special case: Some have AND logic (Ambassador), some OR logic.
-              // Our simple types mostly just have nights. 
-              // Ambassador has nights AND spend.
               if (req.spendUSD) {
                   if (stats.spend >= req.spendUSD) met = true;
               } else {
@@ -199,15 +215,22 @@ export const EliteStatusView: React.FC<EliteStatusViewProps> = ({ stays }) => {
           } else if (req.stays && stats.stayCount >= req.stays) {
               met = true;
           } else if (req.spendUSD && !req.nights && stats.spend >= req.spendUSD) {
-              // Pure spend requirement
               met = true;
           }
-
           if (met) return tier.name;
       }
-
       return 'Member';
   };
+
+  // Freemium Logic: 
+  // If not PRO, identify the "Best" program (most nights) and lock the others.
+  const programsWithStats = ELITE_PROGRAMS.map(prog => {
+      const stats = calculateStats(prog.name);
+      return { ...prog, stats };
+  });
+
+  const sortedByNights = [...programsWithStats].sort((a, b) => b.stats.nights - a.stats.nights);
+  const bestProgramId = sortedByNights[0].id;
 
   return (
     <div className="space-y-8 pb-24">
@@ -221,18 +244,21 @@ export const EliteStatusView: React.FC<EliteStatusViewProps> = ({ stays }) => {
          <p className="text-slate-500 max-w-md mx-auto">
             Manage your elite statuses for {referenceYear + 1}. Based on {referenceYear} activity.
          </p>
-         <div className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-1 rounded-full border border-amber-100">
-             <Info size={10} />
-             Current Status Validity
-         </div>
+         {!isPro && (
+             <div onClick={onUpgrade} className="cursor-pointer inline-flex items-center gap-2 bg-slate-900 text-white text-xs font-bold px-3 py-1.5 rounded-full border border-slate-800 shadow-md hover:scale-105 transition-transform">
+                 <Lock size={12} className="text-amber-400" />
+                 Free Plan: 1 Status Tracked
+             </div>
+         )}
       </div>
 
       {/* Grid of Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {ELITE_PROGRAMS.map(prog => {
-            const stats = calculateStats(prog.name);
-            const earned = getEarnedStatus(prog, stats);
-            
+        {programsWithStats.map(prog => {
+            const earned = getEarnedStatus(prog, prog.stats);
+            // Lock if not Pro AND not the best program
+            const isLocked = !isPro && prog.id !== bestProgramId;
+
             return (
                 <StatusCard 
                     key={prog.id} 
@@ -241,7 +267,9 @@ export const EliteStatusView: React.FC<EliteStatusViewProps> = ({ stays }) => {
                     manualStatus={manualStatuses[prog.id]}
                     onUpdateStatus={(s) => handleUpdateStatus(prog.id, s)}
                     prevYear={referenceYear}
-                    earnedStats={stats}
+                    earnedStats={prog.stats}
+                    locked={isLocked}
+                    onUpgrade={onUpgrade}
                 />
             );
         })}

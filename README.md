@@ -1,8 +1,20 @@
- More to come
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
 
-# StayFolio Projects
+# Run and deploy your AI Studio app
 
-Track your hotel stays, hotel promo, and status achievement to your next elevated tier.
+This contains everything you need to run your app locally.
 
-https://stayfolio-66987022712.us-west1.run.app/
+View your app in AI Studio: https://ai.studio/apps/68478381-21a3-498b-9776-9db0d62c6edc
 
+## Run Locally
+
+**Prerequisites:**  Node.js
+
+
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`
