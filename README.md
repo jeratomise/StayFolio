@@ -1,20 +1,72 @@
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+
+# StayFolio
+
+### The [Flighty](https://flighty.com) for your Hotel Stays.
+
+Stop using spreadsheets. StayFolio is the ultimate companion for the elite traveler. Track your history, visualize your footprint, and optimize your status strategy.
+
+[![Live Demo](https://img.shields.io/badge/Live-stayfolio.vercel.app-7C3AED?style=for-the-badge)](https://stayfolio.vercel.app)
+
+![StayFolio Landing Page](docs/screenshot-landing.png)
+
 </div>
 
-# Run and deploy your AI Studio app
+---
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/68478381-21a3-498b-9776-9db0d62c6edc
+- **Portfolio Tracking** — Analytics dashboard with stats, charts, financials, and traveler persona insights
+- **Stay Management** — Full CRUD for hotel stays with year/month filters and nights-by-brand breakdown
+- **Status Calculator** — Real-time progress tracking toward your next elite tier across 9 loyalty programs
+- **Elite Status Wallet** — Auto-calculated status based on prior year activity, with manual override support
+- **Travel AI** — AI-powered guest book cards and social captions via Google Gemini
+- **Hotel Intel** — Weekly curated news feed from major hotel brands
+- **AI Concierge** — Chat-based travel assistant
 
-## Run Locally
+## Supported Loyalty Programs
 
-**Prerequisites:**  Node.js
+Marriott Bonvoy · World of Hyatt · Hilton Honors · IHG One Rewards · Accor Live Limitless · GHA Discovery · Best Western Rewards · Wyndham Rewards · Radisson Rewards
 
+## Tech Stack
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+| Layer | Tech |
+|-------|------|
+| Frontend | React 19, TypeScript, Vite |
+| Styling | Tailwind CSS (CDN) |
+| Backend | Supabase (Auth, Database, Storage, Edge Functions) |
+| AI | Google Gemini API |
+| Charts | Recharts |
+| Icons | Lucide React |
+| Hosting | Vercel |
+
+## Getting Started
+
+**Prerequisites:** Node.js
+
+1. Clone the repo
+   ```bash
+   git clone https://github.com/jeratomise/StayFolio.git
+   cd StayFolio
+   ```
+
+2. Install dependencies
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables — create a `.env` file:
+   ```
+   GEMINI_API_KEY=your_gemini_api_key
+   ```
+
+4. Run the dev server
+   ```bash
+   npm run dev
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000)
+
+## License
+
+MIT
