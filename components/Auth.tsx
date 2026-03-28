@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
-import { Mail, Lock, Loader2, ArrowRight, ShieldCheck, AlertTriangle, CheckCircle2, Crown, TrendingUp, Globe, Sparkles, Star, Zap, Calendar, Smartphone } from 'lucide-react';
+import { Mail, Lock, Loader2, ArrowRight, ShieldCheck, AlertTriangle, CheckCircle2, Crown, TrendingUp, Globe, Sparkles, Star, Zap, Calendar, Smartphone, Ticket } from 'lucide-react';
 
 export const Auth: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -9,6 +9,7 @@ export const Auth: React.FC = () => {
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>('signup'); // Default to signup for landing page
   const [message, setMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
+  const [promoCode, setPromoCode] = useState('');
 
   // Check for errors in URL (e.g. expired magic link)
   useEffect(() => {
@@ -31,6 +32,9 @@ export const Auth: React.FC = () => {
           password,
         });
         if (error) throw error;
+        if (promoCode.trim()) {
+          localStorage.setItem('stayfolio_pending_promo', promoCode.trim().toUpperCase());
+        }
         setMessage({ type: 'success', text: 'Check your email for the confirmation link!' });
       } else if (mode === 'login') {
         const { error } = await supabase.auth.signInWithPassword({
@@ -203,6 +207,19 @@ export const Auth: React.FC = () => {
                                         placeholder="••••••••"
                                     />
                                 </div>
+                            </div>
+                        )}
+
+                        {mode === 'signup' && (
+                            <div className="relative">
+                                <Ticket size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    value={promoCode}
+                                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all font-medium font-mono tracking-wider"
+                                    placeholder="Promo Code (optional)"
+                                />
                             </div>
                         )}
 

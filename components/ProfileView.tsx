@@ -2,15 +2,18 @@ import React, { useState, useRef } from 'react';
 import { supabase } from '../services/supabase';
 import { uploadUserAvatar } from '../services/storage';
 import { User, Lock, Upload, Download, LogOut, Camera, Loader2, KeyRound, ShieldAlert, Mail, CreditCard, Check, Crown } from 'lucide-react';
+import { RedeemCodeSection } from './RedeemCodeSection';
 
 interface ProfileViewProps {
   user: any; // Supabase user object
   onOpenDataModal: () => void;
   isPro: boolean;
   onTogglePro: () => void;
+  hasStripeSubscription: boolean;
+  onRedeemed: () => void;
 }
 
-export const ProfileView: React.FC<ProfileViewProps> = ({ user, onOpenDataModal, isPro, onTogglePro }) => {
+export const ProfileView: React.FC<ProfileViewProps> = ({ user, onOpenDataModal, isPro, onTogglePro, hasStripeSubscription, onRedeemed }) => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(user?.user_metadata?.avatar_url || null);
   const [uploading, setUploading] = useState(false);
   const [password, setPassword] = useState('');
@@ -141,8 +144,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, onOpenDataModal,
           </div>
       </div>
 
+      {/* Redeem Promo Code */}
+      <RedeemCodeSection isPro={isPro} hasStripeSubscription={hasStripeSubscription} onRedeemed={onRedeemed} />
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
+
           {/* 3. Data Management */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
                <div className="flex items-center gap-2 text-indigo-600 mb-2">

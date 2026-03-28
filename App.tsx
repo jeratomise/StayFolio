@@ -13,6 +13,10 @@ import { Auth } from './components/Auth';
 import { ProfileView } from './components/ProfileView';
 import { AdminUserList } from './components/AdminUserList';
 import { ConciergeView } from './components/ConciergeView';
+import { InstallPrompt } from './components/InstallPrompt';
+import { SmartImport } from './components/SmartImport';
+import { CampaignTracker } from './components/CampaignTracker';
+import { ProExpiryBanner } from './components/ProExpiryBanner';
 import { ELITE_PROGRAMS, BRAND_LOGOS } from './constants';
 
 const StatusTracker: React.FC<{ stays: Stay[] }> = ({ stays }) => {
@@ -153,6 +157,7 @@ const App: React.FC = () => {
   const [view, setView] = useState<ViewMode>('portfolio'); 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDataModalOpen, setIsDataModalOpen] = useState(false);
+  const [isSmartImportOpen, setIsSmartImportOpen] = useState(false);
   const [editingStay, setEditingStay] = useState<Stay | undefined>(undefined);
   
   // Auth State
@@ -163,6 +168,7 @@ const App: React.FC = () => {
   // Subscription State
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [stripeEnabled, setStripeEnabled] = useState(false);
+  const [expiryBannerDismissed, setExpiryBannerDismissed] = useState(false);
 
   // Admin Config
   const isAdmin = useMemo(() => session?.user?.email === 'jeratomise@gmail.com', [session]);
@@ -217,8 +223,18 @@ const App: React.FC = () => {
     if (session) {
       fetchStays();
       // On login, ensure user is registered in the public list
-      syncUserRegistry().then(sub => {
+      syncUserRegistry().then(async (sub) => {
           if (sub) setSubscription(sub);
+          // Check for pending promo code from signup
+          const pendingPromo = localStorage.getItem('stayfolio_pending_promo');
+          if (pendingPromo) {
+            localStorage.removeItem('stayfolio_pending_promo');
+            const { redeemPromoCode } = await import('./services/promoCodes');
+            const result = await redeemPromoCode(pendingPromo);
+            if (result.success) {
+              fetchSubscription();
+            }
+          }
       });
       fetchSubscription();
     } else {
@@ -473,9 +489,12 @@ const App: React.FC = () => {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-6">
+        {subscription?.expiresAt && !subscription?.stripeCustomerId && !expiryBannerDismissed && (
+          <ProExpiryBanner expiresAt={subscription.expiresAt} onDismiss={() => setExpiryBannerDismissed(true)} />
+        )}
         {dataLoading && stays.length === 0 ? <div className="py-20 flex justify-center text-slate-300"><Loader2 size={32} className="animate-spin" /></div> : (
         <>
-        {view === 'profile' && <ProfileView user={session.user} onOpenDataModal={() => setIsDataModalOpen(true)} isPro={isPro} onTogglePro={handleUpgrade} />}
+        {view === 'profile' && <ProfileView user={session.user} onOpenDataModal={() => setIsDataModalOpen(true)} isPro={isPro} onTogglePro={handleUpgrade} hasStripeSubscription={!!subscription?.stripeCustomerId} onRedeemed={fetchSubscription} />}
         {view === 'admin_users' && isAdmin && <AdminUserList />}
         {view === 'concierge' && <ConciergeView stays={myStays} isPro={isPro} onUpgrade={handleUpgrade} />}
         {view === 'dashboard' && (

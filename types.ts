@@ -19,7 +19,7 @@ export interface BrandGroup {
   stays: Stay[];
 }
 
-export type ViewMode = 'dashboard' | 'portfolio' | 'share' | 'status' | 'profile' | 'admin_users' | 'concierge';
+export type ViewMode = 'dashboard' | 'portfolio' | 'share' | 'status' | 'profile' | 'admin_users' | 'concierge' | 'campaigns';
 
 export interface StatSummary {
   totalStays: number;
@@ -74,4 +74,27 @@ export interface Subscription {
 
 export interface AppConfig {
   stripeEnabled: boolean;
+}
+
+export interface PromoCode {
+  id: string;
+  code: string;
+  description: string;
+  grantDays: number;
+  isSingleUse: boolean;
+  maxUses: number | null;
+  timesUsed: number;
+  isActive: boolean;
+  expiresAt: string | null;
+  createdBy: string | null;
+  createdAt: string;
+}
+
+export interface PromoRedemption {
+  id: string;
+  codeId: string;
+  userId: string;
+  redeemedAt: string;
+  code?: string;
+  userEmail?: string;
 }

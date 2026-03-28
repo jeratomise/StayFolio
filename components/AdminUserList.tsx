@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { getAdminUserSummary, adminUpdateSubscription, getStripeConfig, setStripeConfig } from '../services/storage';
 import { UserSummary } from '../types';
-import { Users, Loader2, Calendar, Database, CreditCard, ToggleRight, ToggleLeft, Edit, Save, X, Check } from 'lucide-react';
+import { Users, Loader2, Calendar, Database, CreditCard, ToggleRight, ToggleLeft, Edit, Save, X, Check, Ticket } from 'lucide-react';
+import { AdminPromoManager } from './AdminPromoManager';
 
 export const AdminUserList: React.FC = () => {
   const [users, setUsers] = useState<UserSummary[]>([]);
@@ -12,6 +13,7 @@ export const AdminUserList: React.FC = () => {
   const [editStatus, setEditStatus] = useState<'free' | 'pro'>('free');
   const [editExpiry, setEditExpiry] = useState<string>('');
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<'users' | 'promos'>('users');
 
   useEffect(() => {
     loadData();
@@ -108,7 +110,29 @@ export const AdminUserList: React.FC = () => {
             </div>
        </div>
 
-       {loading ? (
+       {/* Tab Bar */}
+       <div className="flex gap-2 bg-white rounded-xl border border-slate-100 p-1 shadow-sm">
+         <button
+           onClick={() => setActiveTab('users')}
+           className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+             activeTab === 'users' ? 'bg-indigo-600 text-white shadow' : 'text-slate-500 hover:bg-slate-50'
+           }`}
+         >
+           <Users size={16} /> Users
+         </button>
+         <button
+           onClick={() => setActiveTab('promos')}
+           className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+             activeTab === 'promos' ? 'bg-indigo-600 text-white shadow' : 'text-slate-500 hover:bg-slate-50'
+           }`}
+         >
+           <Ticket size={16} /> Promo Codes
+         </button>
+       </div>
+
+       {activeTab === 'promos' && <AdminPromoManager />}
+
+       {activeTab === 'users' && (loading ? (
            <div className="flex justify-center py-20 text-indigo-600">
                <Loader2 size={32} className="animate-spin" />
            </div>
@@ -186,9 +210,9 @@ export const AdminUserList: React.FC = () => {
                    </table>
                </div>
            </div>
-       )}
+       ))}
 
-       {editingUser && (
+       {activeTab === 'users' && editingUser && (
            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-fade-in-up">
                    <div className="bg-slate-900 p-4 text-white flex justify-between items-center">
