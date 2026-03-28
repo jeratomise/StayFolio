@@ -1,7 +1,32 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Plus, X, Save, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Moon, DollarSign, Star } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Plus, X, Save, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Moon, DollarSign, Star, MapPin } from 'lucide-react';
 import { Stay } from '../types';
 import { POPULAR_BRANDS, COUNTRIES } from '../constants';
+
+// Load Google Maps script once
+let googleMapsLoaded = false;
+let googleMapsLoading = false;
+const loadGoogleMaps = (): Promise<void> => {
+  if (googleMapsLoaded) return Promise.resolve();
+  if (googleMapsLoading) {
+    return new Promise((resolve) => {
+      const check = setInterval(() => {
+        if (googleMapsLoaded) { clearInterval(check); resolve(); }
+      }, 100);
+    });
+  }
+  googleMapsLoading = true;
+  return new Promise((resolve, reject) => {
+    const key = process.env.GOOGLE_MAPS_API_KEY;
+    if (!key) { googleMapsLoading = false; reject(new Error('No Google Maps API key')); return; }
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
+    script.async = true;
+    script.onload = () => { googleMapsLoaded = true; googleMapsLoading = false; resolve(); };
+    script.onerror = () => { googleMapsLoading = false; reject(new Error('Failed to load Google Maps')); };
+    document.head.appendChild(script);
+  });
+};
 
 interface StayFormProps {
   initialData?: Stay;
@@ -276,6 +301,46 @@ export const StayForm: React.FC<StayFormProps> = ({ initialData, onSave, onClose
   const [cost, setCost] = useState<string>('');
   const [rating, setRating] = useState<number>(0);
   const [customBrand, setCustomBrand] = useState(false);
+  const [mapsReady, setMapsReady] = useState(false);
+  const hotelInputRef = useRef<HTMLInputElement>(null);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+
+  // Initialize Google Places Autocomplete
+  useEffect(() => {
+    loadGoogleMaps()
+      .then(() => setMapsReady(true))
+      .catch(() => {}); // Graceful fallback — input remains a normal text field
+  }, []);
+
+  useEffect(() => {
+    if (!mapsReady || !hotelInputRef.current || autocompleteRef.current) return;
+
+    const autocomplete = new google.maps.places.Autocomplete(hotelInputRef.current, {
+      types: ['lodging'],
+      fields: ['name', 'address_components', 'formatted_address'],
+    });
+
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (place.name) {
+        setHotelName(place.name);
+      }
+      // Auto-fill country from address components
+      const countryComponent = place.address_components?.find(
+        (c) => c.types.includes('country')
+      );
+      if (countryComponent) {
+        const countryName = countryComponent.long_name;
+        // Match against our COUNTRIES list
+        const match = COUNTRIES.find(
+          (c) => c.toLowerCase() === countryName.toLowerCase()
+        );
+        if (match) setCountry(match);
+      }
+    });
+
+    autocompleteRef.current = autocomplete;
+  }, [mapsReady]);
 
   useEffect(() => {
     if (initialData) {
@@ -324,14 +389,18 @@ export const StayForm: React.FC<StayFormProps> = ({ initialData, onSave, onClose
         <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
           <div className="space-y-2">
             <label className="block text-sm font-medium text-slate-700">Hotel Name</label>
-            <input
-              type="text"
-              value={hotelName}
-              onChange={(e) => setHotelName(e.target.value)}
-              placeholder="e.g. Grand Hyatt Tokyo"
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-              required
-            />
+            <div className="relative">
+              {mapsReady && <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-500" />}
+              <input
+                ref={hotelInputRef}
+                type="text"
+                value={hotelName}
+                onChange={(e) => setHotelName(e.target.value)}
+                placeholder={mapsReady ? "Search hotels..." : "e.g. Grand Hyatt Tokyo"}
+                className={`w-full ${mapsReady ? 'pl-9' : 'px-4'} pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all`}
+                required
+              />
+            </div>
           </div>
 
           <div className="space-y-2">

@@ -339,3 +339,42 @@ export const saveManualStatus = (programId: string, statusName: string) => {
   localStorage.setItem(STATUS_KEY, JSON.stringify(current));
   return current;
 };
+
+// --- Campaign Selections (Supabase sync) ---
+
+export const getCampaignSelections = async (campaignId: string): Promise<string[]> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from('campaign_selections')
+    .select('selections')
+    .eq('user_id', user.id)
+    .eq('campaign_id', campaignId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching campaign selections:', error);
+    return [];
+  }
+
+  return data?.selections || [];
+};
+
+export const saveCampaignSelections = async (campaignId: string, selections: string[]): Promise<void> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { error } = await supabase
+    .from('campaign_selections')
+    .upsert({
+      user_id: user.id,
+      campaign_id: campaignId,
+      selections,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id,campaign_id' });
+
+  if (error) {
+    console.error('Error saving campaign selections:', error);
+  }
+};

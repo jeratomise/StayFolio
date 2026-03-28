@@ -528,6 +528,7 @@ const App: React.FC = () => {
         {view === 'portfolio' && <BrandPortfolio stays={myStays} />}
         {view === 'status' && <EliteStatusView stays={myStays} isPro={isPro} onUpgrade={handleUpgrade} />}
         {view === 'share' && <ShareView stays={myStays} summary={stats} />}
+        {view === 'campaigns' && <CampaignTracker />}
         </>
         )}
       </main>
@@ -538,6 +539,7 @@ const App: React.FC = () => {
         <div className="max-w-xl mx-auto flex justify-between md:justify-center md:gap-6">
             <NavButton active={view === 'portfolio'} onClick={() => setView('portfolio')} icon={<Briefcase size={24} />} label="Portfolio" />
             <NavButton active={view === 'dashboard'} onClick={() => setView('dashboard')} icon={<LayoutDashboard size={24} />} label="Manage" />
+            <NavButton active={view === 'campaigns'} onClick={() => setView('campaigns')} icon={<Award size={24} />} label="Promos" />
             <div className="relative -top-5"><button onClick={() => setView('concierge')} className={`p-3 rounded-full shadow-lg border-4 border-slate-50 transition-all ${view === 'concierge' ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-600'}`}><Bot size={28} /></button></div>
             <NavButton active={view === 'status'} onClick={() => setView('status')} icon={<Crown size={24} />} label="Status" />
             <NavButton active={view === 'share'} onClick={() => setView('share')} icon={<Share2 size={24} />} label="Share" />
