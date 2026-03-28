@@ -348,7 +348,7 @@ export const getCampaignSelections = async (campaignId: string): Promise<string[
 
   const { data, error } = await supabase
     .from('campaign_selections')
-    .select('selections')
+    .select('brand_ids')
     .eq('user_id', user.id)
     .eq('campaign_id', campaignId)
     .maybeSingle();
@@ -358,7 +358,7 @@ export const getCampaignSelections = async (campaignId: string): Promise<string[
     return [];
   }
 
-  return data?.selections || [];
+  return data?.brand_ids || [];
 };
 
 export const saveCampaignSelections = async (campaignId: string, selections: string[]): Promise<void> => {
@@ -370,7 +370,7 @@ export const saveCampaignSelections = async (campaignId: string, selections: str
     .upsert({
       user_id: user.id,
       campaign_id: campaignId,
-      selections,
+      brand_ids: selections,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id,campaign_id' });
 
